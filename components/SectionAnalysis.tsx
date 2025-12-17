@@ -1,21 +1,24 @@
+
 import React, { useState } from 'react';
-import { Indicator } from '../types';
-import { Sparkles, BrainCircuit, History, ArrowRight } from 'lucide-react';
+import { Indicator, Language } from '../types';
+import { Sparkles, BrainCircuit, ArrowRight } from 'lucide-react';
 import { analyzeSectionLiquidity } from '../services/geminiService';
+import { UI_TEXT } from '../translations';
 
 interface Props {
   title: string;
   indicators: Indicator[];
   colorTheme: 'blue' | 'indigo';
+  lang: Language;
 }
 
-const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme }) => {
+const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme, lang }) => {
   const [analysis, setAnalysis] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
     setLoading(true);
-    const result = await analyzeSectionLiquidity(title, indicators);
+    const result = await analyzeSectionLiquidity(title, indicators, lang);
     setAnalysis(result);
     setLoading(false);
   };
@@ -28,6 +31,8 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme }) => 
     ? 'bg-blue-600 hover:bg-blue-700'
     : 'bg-indigo-600 hover:bg-indigo-700';
 
+  const t = UI_TEXT[lang].actions;
+
   return (
     <div className={`rounded-xl border p-6 mb-8 transition-all ${themeClasses}`}>
       <div className="flex justify-between items-start mb-4">
@@ -36,9 +41,9 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme }) => 
                 <BrainCircuit size={20} />
             </div>
             <div>
-                <h3 className="font-bold text-lg">AI 智能流动性推演</h3>
+                <h3 className="font-bold text-lg">{t.aiSectionTitle}</h3>
                 <p className={`text-xs opacity-70 ${colorTheme === 'blue' ? 'text-blue-700' : 'text-indigo-700'}`}>
-                    基于 {indicators.length} 个核心指标的实时逻辑分析
+                    {t.aiSectionSubtitle}
                 </p>
             </div>
         </div>
@@ -50,11 +55,11 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme }) => 
         >
           {loading ? (
              <>
-               <Sparkles size={14} className="animate-spin" /> 推演中...
+               <Sparkles size={14} className="animate-spin" /> {t.thinking}
              </>
           ) : (
              <>
-               <Sparkles size={14} /> 生成结论
+               <Sparkles size={14} /> {t.aiSectionBtn}
              </>
           )}
         </button>
@@ -81,7 +86,7 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme }) => 
       ) : (
         <div className="text-sm opacity-60 italic flex items-center gap-2 py-4">
             <ArrowRight size={14} />
-            点击上方按钮，AI 将根据当前的指标组合（如 {indicators[0].code}, {indicators[1].code}...）进行因果链推导。
+            {t.aiSectionPlaceholder}
         </div>
       )}
     </div>

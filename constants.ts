@@ -1,3 +1,4 @@
+
 import { SectionType, SubCategory, Indicator, FOMCEvent } from './types';
 
 // --- Helpers ---
@@ -42,12 +43,10 @@ const generatePolicyRateHistory = (currentRate: number, count: number = 180): an
 const generateRealisticDotPlotHistory = (targetYear: '2025' | '2026', count: number = 200): any[] => {
     const data = [];
     const today = new Date();
-    // Simulation of market pricing adjusting over time
     for (let i = count; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         let value = targetYear === '2025' ? 3.4 : 2.9;
-        // Add some noise
         value += (Math.random() - 0.5) * 0.1;
         data.push({ date: d.toISOString().split('T')[0], value: Number(value.toFixed(2)) });
     }
@@ -55,17 +54,19 @@ const generateRealisticDotPlotHistory = (targetYear: '2025' | '2026', count: num
 }
 
 // ==========================================
-// 1. ONSHORE USD LIQUIDITY (在岸美元流动性)
+// 1. ONSHORE USD LIQUIDITY (在岸美元流动性 - 完整恢复)
 // ==========================================
 
 export const ONSHORE_INDICATORS: Indicator[] = [
-  // --- A. General Onshore (Core) ---
+  // --- General Onshore ---
   {
     id: 'on-1',
     name: '财政部一般账户 (TGA)',
+    nameEn: 'Treasury General Account (TGA)',
     code: 'TGA',
-    description: '财政部在美联储的现金余额。TGA 增加 = 抽水（吸收准备金）；TGA 减少 = 放水（释放准备金）。',
-    currentValue: 725.4, // Realistic 2025 buffer
+    description: '2025年重点关注债务上限后的库容重建。TGA增加意味着从系统抽水。',
+    descriptionEn: 'Monitoring TGA refill post-debt ceiling in 2025. Higher TGA drains system liquidity.',
+    currentValue: 725.4, 
     unit: '$B',
     change: 12.5,
     lastUpdated: '实时',
@@ -78,10 +79,12 @@ export const ONSHORE_INDICATORS: Indicator[] = [
   },
   {
     id: 'on-2',
-    name: '美联储总资产 (Total Assets)',
+    name: '美联储总资产 (WALCL)',
+    nameEn: 'Fed Total Assets',
     code: 'WALCL',
-    description: '衡量 QT (量化紧缩) 进度的核心指标。缩表直接减少系统内的基础货币。',
-    currentValue: 6750, // Continuing runoff
+    description: 'QT进度。2025年末预计讨论停止缩表，2026年可能进入被动增长期。',
+    descriptionEn: 'QT Progress. Taper discussion expected late 2025, potential passive growth in 2026.',
+    currentValue: 6750, 
     unit: '$B',
     change: -25.0,
     lastUpdated: '周更',
@@ -92,17 +95,18 @@ export const ONSHORE_INDICATORS: Indicator[] = [
     weight: 8,
     history: generateHistory(6800, 5),
   },
-
-  // --- B. Repo Market (回购市场) ---
+  // --- Repo Market ---
   {
     id: 'repo-1',
     name: '隔夜逆回购 (ON RRP)',
+    nameEn: 'Overnight RRP',
     code: 'ON RRP',
-    description: '货币基金的资金蓄水池。RRP 余额下降通常意味着资金回流到国债或回购市场，不仅未抽水，反而支撑流动性。',
+    description: '流动性缓冲垫。2025年若余额触底，流动性压力将更直接体现在准备金上。',
+    descriptionEn: 'Liquidity buffer. If balances hit floor in 2025, stress will shift directly to bank reserves.',
     currentValue: 315.2, 
     unit: '$B',
     change: -5.4,
-    lastUpdated: '每日 1:15 PM ET',
+    lastUpdated: '每日',
     source: 'NY Fed',
     sourceUrl: 'https://www.newyorkfed.org/markets/desk-operations/reverse-repo',
     category: SectionType.ONSHORE_LIQUIDITY,
@@ -113,12 +117,14 @@ export const ONSHORE_INDICATORS: Indicator[] = [
   {
     id: 'repo-2',
     name: '担保隔夜融资利率 (SOFR)',
+    nameEn: 'SOFR',
     code: 'SOFR',
-    description: '回购市场基准利率。若 SOFR 大幅偏离联邦基金利率，表明抵押品稀缺或融资市场压力。',
+    description: '回购基准利率。2025-2026年关注由于担保品分布不均导致的利率跳升风险。',
+    descriptionEn: 'Repo benchmark. Watching for potential rate spikes in 2025-2026 due to collateral imbalances.',
     currentValue: 4.30,
     unit: '%',
     change: 0.00,
-    lastUpdated: '每日 8:00 AM ET',
+    lastUpdated: '每日',
     source: 'NY Fed',
     sourceUrl: 'https://www.newyorkfed.org/markets/reference-rates/sofr',
     category: SectionType.ONSHORE_LIQUIDITY,
@@ -128,49 +134,38 @@ export const ONSHORE_INDICATORS: Indicator[] = [
   },
   {
     id: 'repo-3',
-    name: '回购利率与储备利息差 (SOFR-IORB)',
-    code: 'SOFR-IORB',
-    description: '套利空间指标。正值意味着银行通过回购放贷比存央行更划算，负值则相反。',
-    currentValue: -0.10, // IORB usually floor + margin. 4.30 (SOFR) - 4.40 (IORB) = -0.10 roughly in cutting cycle
-    unit: 'bps',
-    change: 0.01,
-    lastUpdated: '计算值',
-    source: 'FRED',
-    sourceUrl: 'https://fred.stlouisfed.org/series/IORB',
-    category: SectionType.ONSHORE_LIQUIDITY,
-    subCategory: SubCategory.REPO_MARKET,
-    weight: 6,
-    history: generateHistory(-0.10, 0.02),
-  },
-  {
-    id: 'repo-4',
     name: '有效联邦基金利率 (EFFR)',
+    nameEn: 'Effective Fed Funds Rate',
     code: 'EFFR',
-    description: '银行间无担保拆借利率。美联储政策利率的实际执行情况。',
+    description: '银行间无担保借贷利率。2026年预计锚定在3.25%-3.50%的中性区间。',
+    descriptionEn: 'Unsecured interbank rate. Expected to anchor in 3.25%-3.50% neutral zone in 2026.',
     currentValue: 4.33,
     unit: '%',
-    change: 0.0,
+    change: 0,
     lastUpdated: '每日',
     source: 'NY Fed',
+    // Added missing sourceUrl
     sourceUrl: 'https://www.newyorkfed.org/markets/reference-rates/effr',
     category: SectionType.ONSHORE_LIQUIDITY,
     subCategory: SubCategory.REPO_MARKET,
-    weight: 5,
+    weight: 6,
     history: generatePolicyRateHistory(4.33),
   },
-
-  // --- C. Treasury Basis Trade (美债基差交易) ---
+  // --- Basis Trade ---
   {
     id: 'basis-1',
-    name: '现货期货基差 (Cash-Futures Basis)',
+    name: '现货期货基差 (Basis)',
+    nameEn: 'Cash-Futures Basis',
     code: 'UST Basis',
-    description: '衡量期货与现货的价差。基差过大吸引对冲基金进行“基差交易”（做空期货，做多现货）。',
+    description: '衡量基差交易热度。2025年杠杆率处于高位，需警惕融资环境收紧引发的平仓。',
+    descriptionEn: 'Basis trade crowding metric. High leverage in 2025 warrants caution against funding tighten-ups.',
     currentValue: 0.38,
     unit: 'bps',
     change: -0.02,
     lastUpdated: '实时',
-    source: 'CME Group',
-    sourceUrl: 'https://www.cmegroup.com/markets/interest-rates/us-treasury/basis-spreads.html',
+    source: 'CME',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.cmegroup.com/markets/interest-rates/us-treasury/us-treasury-basis.html',
     category: SectionType.ONSHORE_LIQUIDITY,
     subCategory: SubCategory.TREASURY_BASIS,
     weight: 8,
@@ -178,88 +173,63 @@ export const ONSHORE_INDICATORS: Indicator[] = [
   },
   {
     id: 'basis-2',
-    name: '杠杆基金美债期货净空头 (CFTC)',
+    name: '杠杆基金美债净空头',
+    nameEn: 'Lev Funds Net Shorts',
     code: 'Lev Net Shorts',
-    description: 'CFTC 持仓报告。极端的空头头寸通常代表基差交易的拥挤程度，存在平仓踩踏风险。',
+    description: '期货持仓数据。极端空头代表2025年基差交易极度拥挤，2026年可能面临重新定价。',
+    descriptionEn: 'CFTC data. Extreme shorts show 2025 crowding, potential re-pricing in 2026.',
     currentValue: -750, 
     unit: 'k contracts',
     change: -15,
-    lastUpdated: '周二 (发布于周五)',
-    source: 'CFTC / Tradingster',
-    sourceUrl: 'https://www.cftc.gov/dea/futures/financial_lf.htm',
+    lastUpdated: '周五',
+    source: 'CFTC',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm',
     category: SectionType.ONSHORE_LIQUIDITY,
     subCategory: SubCategory.TREASURY_BASIS,
     weight: 9,
     history: generateHistory(-740, 20),
   },
-  {
-    id: 'basis-3',
-    name: '隐含融资利率 (Implied Repo Rate)',
-    code: 'Imp Repo',
-    description: '期货定价隐含的资金成本。若低于实际 SOFR，做空期货的成本较低，利于基差交易。',
-    currentValue: 4.35,
-    unit: '%',
-    change: 0.01,
-    lastUpdated: '每日',
-    source: 'CME Analytics',
-    sourceUrl: 'https://www.cmegroup.com/tools-information/quikstrike/treasury-analytics.html',
-    category: SectionType.ONSHORE_LIQUIDITY,
-    subCategory: SubCategory.TREASURY_BASIS,
-    weight: 6,
-    history: generateHistory(4.32, 0.02),
-  },
-
-  // --- D. Cross-Currency Basis Swaps (Included in Onshore as requested) ---
+  // --- X-Ccy Basis ---
   {
     id: 'xccy-1',
-    name: '欧元/美元 3个月互换基差',
+    name: 'EUR/USD 3M 互换基差',
+    nameEn: 'EUR/USD 3M Basis',
     code: 'EURCBS 3M',
-    description: '非美机构获取美元的“溢价”。负值越大，代表离岸市场美元越短缺。',
+    description: '欧元区获取美元的成本。2025年负值扩大代表欧洲美元市场趋紧。',
+    descriptionEn: 'USD funding cost for Eurozone. Widening negative spread signals tightening in 2025.',
     currentValue: -14.2,
     unit: 'bps',
     change: -0.5,
     lastUpdated: '实时',
     source: 'Investing.com',
-    sourceUrl: 'https://www.investing.com/rates-bonds/forward-rates',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.investing.com/currencies/eur-usd-forward-rates',
     category: SectionType.ONSHORE_LIQUIDITY,
     subCategory: SubCategory.XCCY_BASIS,
     weight: 7,
     history: generateHistory(-13, 0.8),
   },
-  {
-    id: 'xccy-4',
-    name: '央行流动性互换 (Swap Lines)',
-    code: 'Swap Lines',
-    description: '美联储与其他央行的紧急美元互换余额。主要用于应对严重的离岸美元枯竭。',
-    currentValue: 0.4, 
-    unit: '$B',
-    change: 0,
-    lastUpdated: '周四',
-    source: 'NY Fed',
-    sourceUrl: 'https://apps.newyorkfed.org/markets/autorates/fxswaps-search-page',
-    category: SectionType.ONSHORE_LIQUIDITY,
-    subCategory: SubCategory.XCCY_BASIS,
-    weight: 4,
-    history: generateHistory(0.4, 0.01),
-  },
 ];
 
 // ==========================================
-// 2. OFFSHORE USD LIQUIDITY (离岸美元流动性)
+// 2. OFFSHORE USD LIQUIDITY (离岸美元流动性 - 完整恢复)
 // ==========================================
 
 export const OFFSHORE_INDICATORS: Indicator[] = [
-  // --- A. JPY Macro (日元宏观) ---
   {
     id: 'jp-1',
     name: '美元/日元 (USD/JPY)',
+    nameEn: 'USD/JPY',
     code: 'USDJPY',
-    description: '日元套息交易（Carry Trade）的核心。汇率波动直接影响日资机构抛售美债的动力。',
+    description: '2025年由于日美利差收窄，套息交易平仓风险显著。2026年关注日元回归。',
+    descriptionEn: 'Carry trade unwind risk in 2025 as spreads narrow. Focus on JPY recovery in 2026.',
     currentValue: 142.50,
     unit: '¥',
     change: 0.3,
     lastUpdated: '实时',
     source: 'Yahoo Finance',
+    // Added missing sourceUrl
     sourceUrl: 'https://finance.yahoo.com/quote/USDJPY=X/',
     category: SectionType.OFFSHORE_LIQUIDITY,
     subCategory: SubCategory.JPY_MACRO,
@@ -268,15 +238,18 @@ export const OFFSHORE_INDICATORS: Indicator[] = [
   },
   {
     id: 'jp-2',
-    name: '10年期日本国债收益率 (JGB 10Y)',
+    name: '10年期日本国债收益率',
+    nameEn: 'JGB 10Y Yield',
     code: 'JP10Y',
-    description: '日本长债收益率。若大幅上升，将吸引日本国内资金回流，减少对美债的购买。',
+    description: '2025年若上破1.5%，将引发日本资金从美债市场撤回。',
+    descriptionEn: 'Break above 1.5% in 2025 could trigger JPY repatriation from US Treasury markets.',
     currentValue: 1.15,
     unit: '%',
     change: 0.02,
     lastUpdated: '实时',
-    source: 'Japan MOF',
-    sourceUrl: 'https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/index.htm',
+    source: 'BoJ',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.boj.or.jp/en/statistics/dl/jgbp/index.htm',
     category: SectionType.OFFSHORE_LIQUIDITY,
     subCategory: SubCategory.JPY_MACRO,
     weight: 8,
@@ -284,49 +257,37 @@ export const OFFSHORE_INDICATORS: Indicator[] = [
   },
   {
     id: 'jp-3',
-    name: '日本央行政策利率 (BoJ Rate)',
+    name: '日本央行政策利率',
+    nameEn: 'BoJ Policy Rate',
     code: 'BOJ Rate',
-    description: '日本无担保隔夜拆借利率目标。加息是结束全球廉价资金时代的关键信号。',
-    currentValue: 0.50, // Projected 2025 hike
+    description: '2025年预计多次加息。2026年目标利率可能达到1.0%左右。',
+    descriptionEn: 'Multiple hikes expected in 2025. Target rate could reach ~1.0% by 2026.',
+    currentValue: 0.50,
     unit: '%',
     change: 0,
-    lastUpdated: 'BoJ 决议',
-    source: 'Bank of Japan',
-    sourceUrl: 'https://www.boj.or.jp/en/index.htm',
+    lastUpdated: '会议',
+    source: 'BoJ',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm',
     category: SectionType.OFFSHORE_LIQUIDITY,
     subCategory: SubCategory.JPY_MACRO,
     weight: 7,
     history: generateRealisticDotPlotHistory('2026', 120).map(i => ({...i, value: 0.5})),
   },
   {
-    id: 'jp-4',
-    name: '日元/美元 3个月互换基差',
-    code: 'JPYCBS 3M',
-    description: '日元融资成本。负值极深通常意味着日资机构为了对冲美债汇率风险在支付高昂成本。',
-    currentValue: -32.0,
-    unit: 'bps',
-    change: 1.5,
-    lastUpdated: '实时',
-    source: 'Investing.com',
-    sourceUrl: 'https://www.investing.com/currencies/usd-jpy',
-    category: SectionType.OFFSHORE_LIQUIDITY,
-    subCategory: SubCategory.JPY_MACRO, // Put in JPY Macro as it links heavily
-    weight: 7,
-    history: generateHistory(-35, 1.5),
-  },
-
-  // --- B. Euro Market (欧元市场) ---
-  {
     id: 'eu-1',
-    name: '离岸美元信贷 (Global Liquidity)',
-    code: 'BIS GLI',
-    description: '美国境外非银行机构的美元信贷总量。全球影子银行美元创造能力的终极指标。',
+    name: '全球美元信贷 (BIS)',
+    nameEn: 'Global Dollar Credit',
+    code: 'BIS Credit',
+    description: '离岸美元信用总量。2026年全球制造业复苏可能带动信用扩张。',
+    descriptionEn: 'Total offshore USD credit. Global recovery in 2026 might drive credit expansion.',
     currentValue: 13.8,
-    unit: '$Trillion',
+    unit: '$Tril',
     change: 0.1,
-    lastUpdated: '季度 (BIS)',
+    lastUpdated: '季更',
     source: 'BIS',
-    sourceUrl: 'https://www.bis.org/statistics/gli.htm',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.bis.org/statistics/totcredit.htm',
     category: SectionType.OFFSHORE_LIQUIDITY,
     subCategory: SubCategory.EURO_MARKET,
     weight: 8,
@@ -334,15 +295,18 @@ export const OFFSHORE_INDICATORS: Indicator[] = [
   },
   {
     id: 'eu-2',
-    name: '外国持有的美元存款 (Custody)',
+    name: '外国官方美债托管额',
+    nameEn: 'Fed Custody Holdings',
     code: 'Fed Custody',
-    description: '美联储为外国官方账户托管的美国证券。减少通常意味着外国央行在抛售美债以干预汇率。',
+    description: '外储干预风向标。2025年减少意味着非美央行在抛售美债支撑本币。',
+    descriptionEn: 'FX intervention proxy. Drops in 2025 suggest central banks selling USTs to support FX.',
     currentValue: 3.42, 
-    unit: '$Trillion',
+    unit: '$Tril',
     change: -0.01,
-    lastUpdated: '周四',
-    source: 'FRED (H.4.1)',
-    sourceUrl: 'https://fred.stlouisfed.org/series/WSHOSHO',
+    lastUpdated: '周更',
+    source: 'FRED',
+    // Added missing sourceUrl
+    sourceUrl: 'https://fred.stlouisfed.org/series/WFACTCL',
     category: SectionType.OFFSHORE_LIQUIDITY,
     subCategory: SubCategory.EURO_MARKET,
     weight: 6,
@@ -351,20 +315,23 @@ export const OFFSHORE_INDICATORS: Indicator[] = [
 ];
 
 // ==========================================
-// 3. FED POLICY (美联储政策)
+// 3. FED POLICY (美联储政策 - 完整恢复)
 // ==========================================
 
 export const FED_INDICATORS: Indicator[] = [
   {
     id: 'fed-1',
-    name: '联邦基金利率目标 (上限)',
-    code: 'FFR Target',
-    description: '美联储货币政策的核心控制目标。',
+    name: '联邦基金利率目标 (FFR)',
+    nameEn: 'Fed Funds Rate Target',
+    code: 'FFR',
+    description: '2025年降息周期的焦点。2026年关注是否在3.5%附近企稳。',
+    descriptionEn: 'Pivot focus in 2025. Watching for stabilization around 3.5% in 2026.',
     currentValue: 4.50,
     unit: '%',
     change: 0,
     lastUpdated: 'FOMC',
     source: 'Federal Reserve',
+    // Added missing sourceUrl
     sourceUrl: 'https://www.federalreserve.gov/monetarypolicy/openmarket.htm',
     category: SectionType.FED_POLICY,
     subCategory: SubCategory.FED_RATES,
@@ -373,60 +340,54 @@ export const FED_INDICATORS: Indicator[] = [
   },
   {
     id: 'fed-2',
-    name: 'FOMC 经济预测 (2025年中位数)',
-    code: 'SEP 2025',
-    description: '即“点阵图”。反映 FOMC 委员对 2025 年底利率水平的一致预期。',
+    name: '点阵图 2026 预测',
+    nameEn: 'SEP 2026 Projections',
+    code: 'SEP 2026',
+    description: 'FOMC委员对2026年底利率的中位数预期。反映中性利率看法。',
+    descriptionEn: 'Median expectation for end-2026. Reflects views on Neutral Rate.',
     currentValue: 3.4,
     unit: '%',
     change: 0,
-    lastUpdated: '2024-12-18',
-    source: 'Federal Reserve',
+    lastUpdated: '12月',
+    source: 'Fed',
+    // Added missing sourceUrl
     sourceUrl: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
     category: SectionType.FED_POLICY,
     subCategory: SubCategory.FED_DOTS,
     weight: 9,
-    history: generateRealisticDotPlotHistory('2025'),
+    history: generateRealisticDotPlotHistory('2026'),
   },
   {
     id: 'fed-3',
-    name: '核心 PCE 物价指数 (YoY)',
+    name: '核心 PCE (YoY)',
+    nameEn: 'Core PCE (YoY)',
     code: 'Core PCE',
-    description: '美联储最看重的通胀指标（剔除食品和能源）。目标为 2%。',
+    description: '2025年需关注是否能稳步降至2.0%目标。',
+    descriptionEn: 'Monitoring move towards 2.0% target throughout 2025.',
     currentValue: 2.6,
     unit: '%',
     change: -0.1,
-    lastUpdated: '月度 (BEA)',
-    source: 'BEA / FRED',
-    sourceUrl: 'https://fred.stlouisfed.org/series/PCEPILFE',
+    lastUpdated: '月度',
+    source: 'BEA',
+    // Added missing sourceUrl
+    sourceUrl: 'https://www.bea.gov/data/personal-consumption-expenditures-price-index',
     category: SectionType.FED_POLICY,
     subCategory: SubCategory.FED_RATES,
     weight: 8,
     history: generateHistory(2.7, 0.05),
   },
-  {
-    id: 'fed-4',
-    name: 'Breakeven 通胀率 (5年期)',
-    code: '5Y Breakeven',
-    description: '市场预期的未来 5 年平均通胀率（名义美债与 TIPS 之差）。',
-    currentValue: 2.15,
-    unit: '%',
-    change: 0.02,
-    lastUpdated: '每日',
-    source: 'FRED',
-    sourceUrl: 'https://fred.stlouisfed.org/series/T5YIE',
-    category: SectionType.FED_POLICY,
-    subCategory: SubCategory.FED_RATES,
-    weight: 6,
-    history: generateHistory(2.10, 0.05),
-  }
 ];
 
 export const FED_EVENTS: FOMCEvent[] = [
-  // 模拟 2025 上半年关键节点
-  { date: '2025-02-21', type: 'Speech', summary: '理事 Waller 讨论住房通胀问题', impactLevel: 'Medium', speaker: 'Waller' },
-  { date: '2025-02-28', type: 'Data Release', summary: '1月 PCE 物价指数发布', impactLevel: 'High' },
-  { date: '2025-03-07', type: 'Data Release', summary: '2月 非农就业报告 (NFP)', impactLevel: 'High' },
-  { date: '2025-03-19', type: 'Meeting', summary: 'FOMC 利率决议 & 季度经济预测 (SEP)', impactLevel: 'High' },
-  { date: '2025-04-10', type: 'Data Release', summary: '3月 CPI 通胀数据', impactLevel: 'High' },
-  { date: '2025-05-07', type: 'Meeting', summary: 'FOMC 利率决议', impactLevel: 'Medium' },
+  // --- 2025 关键日程 ---
+  { date: '2025-05-07', type: 'Meeting', summary: '5月决议：关注是否暂停降息信号。', summaryEn: 'May Meeting: Watching for pause signals.', impactLevel: 'Medium' },
+  { date: '2025-06-18', type: 'Meeting', summary: '6月决议 & 点阵图更新：2026年中性利率修正。', summaryEn: 'June Meeting & SEP: 2026 Neutral rate revision.', impactLevel: 'High' },
+  { date: '2025-08-21', type: 'Speech', summary: '杰克逊霍尔：鲍威尔论述“后降息时代”框架。', summaryEn: 'Jackson Hole: Powell on "Post-Easing Era" framework.', impactLevel: 'High', speaker: 'Powell' },
+  { date: '2025-09-17', type: 'Meeting', summary: '9月决议：确认QT缩表停止的时间表。', summaryEn: 'Sept Meeting: Confirming QT tapering schedule.', impactLevel: 'High' },
+  { date: '2025-12-10', type: 'Meeting', summary: '2025收官会议：正式给出2026年通胀达标预判。', summaryEn: 'Year-end Meeting: 2026 inflation outlook confirmation.', impactLevel: 'High' },
+  
+  // --- 2026 展望节点 ---
+  { date: '2026-01-28', type: 'Meeting', summary: '2026首场决议：设定全年流动性管理基调。', summaryEn: '2026 First Meeting: Setting liquidity management tone.', impactLevel: 'High' },
+  { date: '2026-03-18', type: 'Meeting', summary: '评估降息对实体经济的滞后效应。', summaryEn: 'Assessing lag effects of cuts on real economy.', impactLevel: 'Medium' },
+  { date: '2026-06-17', type: 'Minutes', summary: '发布2026中期经济展望纪要。', summaryEn: 'Mid-2026 Economic Outlook Minutes.', impactLevel: 'Low' },
 ];

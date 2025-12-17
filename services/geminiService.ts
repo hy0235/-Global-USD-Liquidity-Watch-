@@ -1,89 +1,108 @@
+
 import { GoogleGenAI } from "@google/genai";
-import { Indicator } from "../types";
+import { Indicator, Language } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Always use new GoogleGenAI({ apiKey: process.env.API_KEY })
+const getAiClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndicators: Indicator[]) => {
-  if (!apiKey) return "未配置 API Key。";
-
+export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndicators: Indicator[], lang: Language = 'zh') => {
+  const ai = getAiClient();
   const usData = usIndicators.map(i => `${i.code}: ${i.currentValue}${i.unit}`).join(', ');
   const jpyData = jpyIndicators.map(i => `${i.code}: ${i.currentValue}${i.unit}`).join(', ');
 
-  const prompt = `
-    你是一位资深的宏观策略师。根据以下实时数据，用中文总结当前全球美元流动性的状态（请列出 3 个简明扼要的要点）。
-    
+  const systemInstruction = lang === 'zh' 
+    ? "你是一位精通 2025-2026 宏观周期的首席策略师。请关注中性利率 (Neutral Rate) 和 QT 终局。用中文回答。" 
+    : "You are a Chief Strategist expert in the 2025-2026 macro cycle. Focus on the Neutral Rate and QT End-Game. Answer in English.";
+
+  const prompt = lang === 'zh' ? `
+    根据以下数据总结当前及 2025/2026 展望（3个要点）：
+    美国数据: ${usData}
+    日本数据: ${jpyData}
+    重点：2025年降息终点、2026年中性利率预期、以及离岸日元套息平仓的风险。
+  ` : `
+    Summarize status and 2025/2026 outlook based on this data (3 points):
+    US Data: ${usData}
+    Japan Data: ${jpyData}
+    Focus: 2025 terminal rate, 2026 neutral rate expectations, and JPY carry trade unwind risks.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: prompt,
+      config: { systemInstruction }
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return lang === 'zh' ? "分析服务暂时不可用。" : "Analysis service unavailable.";
+  }
+};
+
+export const analyzeSectionLiquidity = async (sectionName: string, indicators: Indicator[], lang: Language = 'zh') => {
+  const ai = getAiClient();
+  const dataSummary = indicators.map(i => {
+      const name = lang === 'zh' ? i.name : i.nameEn;
+      return `${name} (${i.code}): ${i.currentValue}${i.unit} (Change: ${i.change}%)`
+  }).join('\n');
+
+  const prompt = lang === 'zh' ? `
+    对"${sectionName}"进行深度分析，特别是对 2025 年末到 2026 年初的政策传导。
     数据:
-    美国指标: ${usData}
-    日本指标: ${jpyData}
-    
-    请重点关注:
-    1. 净流动性公式 (美联储资产负债表 - TGA - RRP) 的变化及其含义。
-    2. 美元兑日元 (USDJPY) 套息交易对美国国债的潜在影响。
-    3. 最终结论：当前流动性是在扩张、中性还是收缩？
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-    return response.text;
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "分析服务暂时不可用。";
-  }
-};
-
-export const analyzeSectionLiquidity = async (sectionName: string, indicators: Indicator[]) => {
-  if (!apiKey) return "未配置 API Key。";
-
-  const dataSummary = indicators.map(i => `${i.name} (${i.code}): ${i.currentValue}${i.unit} (变化: ${i.change}%)`).join('\n');
-
-  const prompt = `
-    作为一位资深的全球宏观交易员，请对"${sectionName}"板块进行深度流动性分析。
-    
-    实时指标数据:
     ${dataSummary}
-
-    请严格按照以下 Markdown 格式输出分析结果：
-
+    请按以下格式输出：
     ### 1. 推理逻辑
-    (简述核心指标之间的传导机制。例如：若TGA上升且RRP下降，说明财政部发债主要由货币基金承接，对银行准备金冲击较小。需结合数据变化数值进行逻辑推导。)
-
-    ### 2. 当前状态
-    (明确给出定性判断：**宽松** / **中性** / **紧缩** / **边际收紧** 等。并简述核心理由。)
-
-    ### 3. 未来展望
-    (基于当前数据趋势，预测未来 1-3 个月的流动性走向。关注潜在的风险点或拐点。)
-    
-    要求：专业、客观、逻辑严密，字数控制在 300 字以内。
+    ### 2. 2025 现状判断
+    ### 3. 2026 政策锚点与风险
+  ` : `
+    Deep analysis for "${sectionName}" focusing on policy transmission from late 2025 to early 2026.
+    Data:
+    ${dataSummary}
+    Format:
+    ### 1. Reasoning Logic
+    ### 2. 2025 Status
+    ### 3. 2026 Policy Anchors & Risks
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
+      config: {
+        systemInstruction: lang === 'zh' ? "专业宏观交易员视角，关注未来两年周期" : "Professional macro trader perspective, focus on the next 2-year cycle"
+      }
     });
     return response.text;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "AI 分析服务暂时不可用，请稍后再试。";
+    return lang === 'zh' ? "AI 分析服务暂时不可用。" : "AI analysis unavailable.";
   }
 };
 
-export const explainCorrelation = async (metricA: string, metricB: string) => {
-    if (!apiKey) return "未配置 API Key。";
-    
-    const prompt = `用中文解释 ${metricA} 和 ${metricB} 之间的宏观经济关系，一段话以内（50字左右）。重点解释因果机制。`;
-    
-    try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: prompt,
-        });
-        return response.text;
-      } catch (error) {
-        return "暂无解释。";
+/**
+ * Fetches upcoming release dates for macro indicators using Google Search Grounding
+ */
+export const fetchIndicatorReleaseDates = async (lang: Language = 'zh') => {
+  const ai = getAiClient();
+  const query = lang === 'zh' 
+    ? "搜索并列出 2025 年剩余月份和 2026 年初已知的美元宏观指标发布日程，特别是 FOMC 会议、PCE、非农以及 TGA 更新。请标注 2026 年的预估时间点。"
+    : "Search and list key USD macro indicator release dates for the rest of 2025 and early 2026, including FOMC Meetings, PCE, NFP, and TGA updates. Highlight estimated 2026 dates.";
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: query,
+      config: {
+        tools: [{ googleSearch: {} }]
       }
-}
+    });
+
+    const text = response.text;
+    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+    
+    return { text, sources };
+  } catch (error) {
+    console.error("Search Grounding Error:", error);
+    throw error;
+  }
+};

@@ -1,12 +1,14 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { Indicator } from '../types';
+import { Indicator, Language } from '../types';
 
 interface BubbleMapProps {
   onshore: Indicator[];
   offshore: Indicator[];
   onSelect: (indicator: Indicator) => void;
   selectedId?: string;
+  lang: Language;
 }
 
 const getLinks = (nodes: any[]) => {
@@ -45,7 +47,7 @@ const getLinks = (nodes: any[]) => {
   return links;
 };
 
-const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, selectedId }) => {
+const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, selectedId, lang }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   
@@ -150,9 +152,6 @@ const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, sele
       .attr("font-size", (d: any) => Math.min(getSize(d.weight) / 2.5, 11))
       .style("pointer-events", "none");
 
-    // Weight Badge (Optional, keeping it subtle)
-    // Removed weight badge to keep it cleaner like bubblemaps.io, size implies weight already.
-
     // --- Update positions ---
     simulation.on("tick", () => {
       link
@@ -195,16 +194,19 @@ const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, sele
     return 35 + (weight * 4.5); 
   };
 
+  const labelOnshore = lang === 'zh' ? "在岸 (Onshore)" : "Onshore";
+  const labelOffshore = lang === 'zh' ? "离岸 (Offshore)" : "Offshore";
+
   return (
     <div ref={wrapperRef} className="w-full bg-[#0F1115] rounded-xl overflow-hidden shadow-2xl border border-gray-800 relative">
         <div className="absolute top-4 left-4 z-10 flex gap-4 pointer-events-none">
             <div className="flex items-center gap-2 px-2 py-1 bg-black/40 rounded-full border border-gray-700 backdrop-blur-sm">
                 <div className="w-3 h-3 rounded-full bg-[#60A5FA]"></div>
-                <span className="text-xs text-gray-200 font-medium">在岸 (Onshore)</span>
+                <span className="text-xs text-gray-200 font-medium">{labelOnshore}</span>
             </div>
             <div className="flex items-center gap-2 px-2 py-1 bg-black/40 rounded-full border border-gray-700 backdrop-blur-sm">
                 <div className="w-3 h-3 rounded-full bg-[#C084FC]"></div>
-                <span className="text-xs text-gray-200 font-medium">离岸 (Offshore)</span>
+                <span className="text-xs text-gray-200 font-medium">{labelOffshore}</span>
             </div>
         </div>
         

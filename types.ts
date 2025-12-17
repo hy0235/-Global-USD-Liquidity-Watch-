@@ -1,3 +1,6 @@
+
+export type Language = 'zh' | 'en';
+
 export enum SectionType {
   DASHBOARD = 'DASHBOARD',
   ONSHORE_LIQUIDITY = 'ONSHORE_LIQUIDITY',
@@ -7,18 +10,18 @@ export enum SectionType {
 
 export enum SubCategory {
   // Onshore
-  GENERAL_ONSHORE = '核心流动性 (General)',
-  REPO_MARKET = '回购市场 (Repo Market)',
-  TREASURY_BASIS = '美债基差 (Treasury Basis Trade)',
-  XCCY_BASIS = '货币互换 (Cross-Currency Basis)',
+  GENERAL_ONSHORE = 'GENERAL_ONSHORE',
+  REPO_MARKET = 'REPO_MARKET',
+  TREASURY_BASIS = 'TREASURY_BASIS',
+  XCCY_BASIS = 'XCCY_BASIS',
   
   // Offshore
-  JPY_MACRO = '日元宏观 (JPY Macro)',
-  EURO_MARKET = '欧元市场 (Euro Market)',
+  JPY_MACRO = 'JPY_MACRO',
+  EURO_MARKET = 'EURO_MARKET',
   
   // Fed
-  FED_RATES = '利率与通胀',
-  FED_DOTS = '点阵图预测'
+  FED_RATES = 'FED_RATES',
+  FED_DOTS = 'FED_DOTS'
 }
 
 export interface DataPoint {
@@ -30,8 +33,10 @@ export interface DataPoint {
 export interface Indicator {
   id: string;
   name: string;
+  nameEn: string; // English Name
   code: string; // e.g., 'TGA', 'SOFR'
   description: string;
+  descriptionEn: string; // English Description
   currentValue: number | string;
   unit: string;
   change: number; // Percentage change
@@ -43,12 +48,14 @@ export interface Indicator {
   weight: number; // 1-10, determines bubble size
   history: DataPoint[];
   correlationNote?: string; // Relationship explanation
+  correlationNoteEn?: string; // English Relationship explanation
 }
 
 export interface FOMCEvent {
   date: string;
   type: 'Meeting' | 'Minutes' | 'Speech' | 'Data Release';
   summary: string;
+  summaryEn: string; // English Summary
   impactLevel: 'High' | 'Medium' | 'Low';
   speaker?: string; // For speeches
 }
