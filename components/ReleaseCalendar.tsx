@@ -9,8 +9,13 @@ interface Props {
   lang: Language;
 }
 
+interface CalendarData {
+  text: string;
+  sources: any[];
+}
+
 const ReleaseCalendar: React.FC<Props> = ({ lang }) => {
-  const [data, setData] = useState<{ text: string, sources: any[] } | null>(null);
+  const [data, setData] = useState<CalendarData | null>(null);
   const [loading, setLoading] = useState(false);
   const t = UI_TEXT[lang].actions;
 
@@ -18,9 +23,14 @@ const ReleaseCalendar: React.FC<Props> = ({ lang }) => {
     setLoading(true);
     try {
       const result = await fetchIndicatorReleaseDates(lang);
-      setData(result);
+      // 确保 result.text 即使为 undefined 也能被处理为 string
+      setData({
+        text: result.text || "",
+        sources: result.sources || []
+      });
     } catch (e) {
       console.error(e);
+      setData({ text: "Error fetching calendar data.", sources: [] });
     } finally {
       setLoading(false);
     }
@@ -102,3 +112,4 @@ const ReleaseCalendar: React.FC<Props> = ({ lang }) => {
 };
 
 export default ReleaseCalendar;
+
