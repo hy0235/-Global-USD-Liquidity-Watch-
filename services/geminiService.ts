@@ -2,10 +2,18 @@
 import { GoogleGenAI } from "@google/genai";
 import { Indicator, Language } from "../types";
 
-// Always use new GoogleGenAI({ apiKey: process.env.API_KEY })
-const getAiClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// 使用类型断言绕过环境变量检查
+const getApiKey = (): string => {
+  try {
+    return (process.env as any).API_KEY || "";
+  } catch (e) {
+    return "";
+  }
+};
 
-export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndicators: Indicator[], lang: Language = 'zh') => {
+const getAiClient = () => new GoogleGenAI({ apiKey: getApiKey() });
+
+export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndicators: Indicator[], lang: Language = 'zh'): Promise<string> => {
   const ai = getAiClient();
   const usData = usIndicators.map(i => `${i.code}: ${i.currentValue}${i.unit}`).join(', ');
   const jpyData = jpyIndicators.map(i => `${i.code}: ${i.currentValue}${i.unit}`).join(', ');
@@ -32,14 +40,14 @@ export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndic
       contents: prompt,
       config: { systemInstruction }
     });
-    return response.text;
+    return response.text || (lang === 'zh' ? "AI 未能生成有效的分析结果。" : "AI failed to generate results.");
   } catch (error) {
     console.error("Gemini API Error:", error);
     return lang === 'zh' ? "分析服务暂时不可用。" : "Analysis service unavailable.";
   }
 };
 
-export const analyzeSectionLiquidity = async (sectionName: string, indicators: Indicator[], lang: Language = 'zh') => {
+export const analyzeSectionLiquidity = async (sectionName: string, indicators: Indicator[], lang: Language = 'zh'): Promise<string> => {
   const ai = getAiClient();
   const dataSummary = indicators.map(i => {
       const name = lang === 'zh' ? i.name : i.nameEn;
@@ -72,17 +80,14 @@ export const analyzeSectionLiquidity = async (sectionName: string, indicators: I
         systemInstruction: lang === 'zh' ? "专业宏观交易员视角，关注未来两年周期" : "Professional macro trader perspective, focus on the next 2-year cycle"
       }
     });
-    return response.text;
+    return response.text || (lang === 'zh' ? "生成失败。" : "Generation failed.");
   } catch (error) {
     console.error("Gemini API Error:", error);
     return lang === 'zh' ? "AI 分析服务暂时不可用。" : "AI analysis unavailable.";
   }
 };
 
-/**
- * Fetches upcoming release dates for macro indicators using Google Search Grounding
- */
-export const fetchIndicatorReleaseDates = async (lang: Language = 'zh') => {
+export const fetchIndicatorReleaseDates = async (lang: Language = 'zh'): Promise<{ text: string, sources: any[] }> => {
   const ai = getAiClient();
   const query = lang === 'zh' 
     ? "搜索并列出 2025 年剩余月份和 2026 年初已知的美元宏观指标发布日程，特别是 FOMC 会议、PCE、非农以及 TGA 更新。请标注 2026 年的预估时间点。"
@@ -97,12 +102,16 @@ export const fetchIndicatorReleaseDates = async (lang: Language = 'zh') => {
       }
     });
 
-    const text = response.text;
-    const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    
-    return { text, sources };
+    return { 
+      text: response.text || (lang === 'zh' ? "未发现相关日程。" : "No dates found."), 
+      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] 
+    };
   } catch (error) {
     console.error("Search Grounding Error:", error);
-    throw error;
+    return { 
+      text: lang === 'zh' ? "无法获取日历数据，请稍后再试。" : "Unable to fetch calendar data.", 
+      sources: [] 
+    };
   }
 };
+
