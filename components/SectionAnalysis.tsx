@@ -18,9 +18,15 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme, lang 
 
   const handleAnalyze = async () => {
     setLoading(true);
-    const result = await analyzeSectionLiquidity(title, indicators, lang);
-    setAnalysis(result);
-    setLoading(false);
+    try {
+      const result = await analyzeSectionLiquidity(title, indicators, lang);
+      // 强制 result 为 string，修复 TS2345
+      setAnalysis(result || "");
+    } catch (err) {
+      setAnalysis("Error analyzing section.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const themeClasses = colorTheme === 'blue' 
@@ -67,14 +73,15 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme, lang 
 
       {analysis ? (
         <div className="prose prose-sm max-w-none text-gray-800 bg-white/50 p-4 rounded-lg border border-black/5">
-            {/* Simple Markdown Rendering */}
             {analysis.split('###').map((section, idx) => {
                 if (!section.trim()) return null;
-                const [title, ...content] = section.split('\n');
+                const lines = section.split('\n');
+                const sectionTitle = lines[0];
+                const content = lines.slice(1);
                 return (
                     <div key={idx} className="mb-4 last:mb-0">
                         <h4 className={`font-bold text-sm mb-2 uppercase tracking-wider ${colorTheme === 'blue' ? 'text-blue-600' : 'text-indigo-600'}`}>
-                            {title.trim()}
+                            {sectionTitle.trim()}
                         </h4>
                         <div className="text-sm leading-relaxed whitespace-pre-wrap">
                             {content.join('\n').trim()}
@@ -94,3 +101,4 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme, lang 
 };
 
 export default SectionAnalysis;
+
