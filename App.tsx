@@ -223,19 +223,19 @@ function App() {
 
         {activeSection === ExtendedSectionType.CALENDAR && <ReleaseCalendar lang={lang} />}
 
-        {/* Detail Overlay */}
+        {/* Detail Overlay - Fixed for Mobile & PC */}
         {selectedChart && (
-            <div className="fixed bottom-8 right-8 w-[400px] bg-white rounded-3xl shadow-2xl border border-gray-200 p-6 z-50 animate-in slide-in-from-right-8 hidden md:block">
-                <div className="flex justify-between items-center mb-5">
-                    <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tight">
+            <div className="fixed bottom-[88px] left-4 right-4 md:bottom-8 md:right-8 md:left-auto md:w-[400px] bg-white rounded-3xl shadow-2xl border border-gray-200 p-5 md:p-6 z-50 animate-in slide-in-from-bottom-8 md:slide-in-from-right-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tight text-sm md:text-base">
                         <TrendingUp size={18} className="text-blue-500"/> {lang==='zh'?selectedChart.name:selectedChart.nameEn}
                     </h3>
-                    <button onClick={()=>setSelectedChart(null)} className="p-2 hover:bg-gray-100 rounded-xl transition-all"><X size={20}/></button>
+                    <button onClick={()=>setSelectedChart(null)} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-500"><X size={20}/></button>
                 </div>
-                <div className="bg-gray-50 rounded-2xl p-3 border border-gray-100">
-                    <ChartComponent data={selectedChart.history} dataKey1={selectedChart.code} height={220} color1="#2563EB" />
+                <div className="bg-gray-50 rounded-2xl p-2 md:p-3 border border-gray-100">
+                    <ChartComponent data={selectedChart.history} dataKey1={selectedChart.code} height={window.innerWidth < 768 ? 160 : 220} color1="#2563EB" />
                 </div>
-                <p className="mt-4 p-4 bg-blue-50/50 rounded-2xl text-[11px] font-semibold text-blue-700 leading-relaxed border border-blue-100">
+                <p className="mt-3 p-3 bg-blue-50/50 rounded-2xl text-[10px] md:text-[11px] font-semibold text-blue-700 leading-relaxed border border-blue-100">
                     {lang==='zh'?selectedChart.description:selectedChart.descriptionEn}
                 </p>
             </div>
