@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  LayoutDashboard, Globe, Landmark, TrendingUp, Activity, Sparkles, CalendarDays, Video, X, Languages, Calendar, Twitter, ExternalLink
+  LayoutDashboard, Globe, Landmark, TrendingUp, Activity, Sparkles, CalendarDays, Video, X, Languages, Calendar, Twitter, ExternalLink, Heart
 } from 'lucide-react';
 import { SectionType, SubCategory, Indicator, Language } from './types';
 import { ONSHORE_INDICATORS, OFFSHORE_INDICATORS, FED_INDICATORS, FED_EVENTS } from './constants';
@@ -12,16 +12,33 @@ import SectionAnalysis from './components/SectionAnalysis';
 import ReleaseCalendar from './components/ReleaseCalendar';
 import { generateDemoVideo } from './services/videoService';
 
-const TwitterBadge = () => (
+const TwitterBadge = ({ variant = 'default' }: { variant?: 'default' | 'premium' }) => (
     <a 
       href="https://x.com/shenhh88" 
       target="_blank" 
       rel="noopener noreferrer" 
-      className="flex items-center gap-2 px-3 py-1.5 text-[10px] md:text-xs font-semibold rounded-full border border-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm bg-white"
+      className={`
+        flex items-center gap-2 px-3 py-1.5 rounded-full transition-all shadow-sm active:scale-95
+        ${variant === 'premium' 
+          ? 'bg-black text-white border border-gray-800 hover:bg-gray-800' 
+          : 'bg-white border border-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white'}
+      `}
     >
         <Twitter size={14} fill="currentColor" />
-        <span>By @shenhh88</span>
+        <span className="text-[10px] md:text-xs font-black tracking-tight">@shenhh88</span>
     </a>
+);
+
+const AppFooter = () => (
+    <div className="mt-12 mb-8 flex flex-col items-center justify-center gap-3 py-12 border-t border-gray-200/50">
+        <div className="flex items-center gap-2 text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+            <span>Designed with</span>
+            <Heart size={10} className="text-rose-500 fill-rose-500 animate-pulse" />
+            <span>by</span>
+        </div>
+        <TwitterBadge variant="premium" />
+        <p className="text-[9px] text-gray-400 font-medium">© 2025 Global USD Liquidity Watch Terminal</p>
+    </div>
 );
 
 const SectionHeader = ({ title, icon: Icon, description }: { title: string, icon: any, description: string }) => (
@@ -130,16 +147,16 @@ function App() {
         </div>
       </aside>
 
-      {/* Mobile Top Header (Author & Title) */}
-      <header className="md:hidden sticky top-0 bg-[#F7F7F5]/80 backdrop-blur-lg border-b border-gray-200 px-4 py-3 flex items-center justify-between z-40">
-          <div className="font-bold text-sm flex items-center gap-2">
-              <div className="w-6 h-6 bg-black rounded text-white flex items-center justify-center text-[10px] font-black italic">M</div>
-              <span className="tracking-tighter font-black uppercase text-xs">USD WATCH</span>
+      {/* Mobile Top Header - Highly Visible Author Branding */}
+      <header className="md:hidden sticky top-0 bg-[#F7F7F5]/90 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between z-50">
+          <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-black rounded text-white flex items-center justify-center text-[10px] font-black italic shadow-sm">M</div>
+              <span className="text-[11px] font-black tracking-tight uppercase text-gray-900">USD Watch</span>
           </div>
           <div className="flex items-center gap-2">
-              <TwitterBadge />
-              <button onClick={() => setLang(l => l==='zh'?'en':'zh')} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 border border-gray-200">
-                <Languages size={14}/>
+              <TwitterBadge variant="premium" />
+              <button onClick={() => setLang(l => l==='zh'?'en':'zh')} className="p-1.5 bg-white border border-gray-200 rounded-full text-gray-500 shadow-sm active:bg-gray-50">
+                  <Languages size={14} />
               </button>
           </div>
       </header>
@@ -175,7 +192,6 @@ function App() {
                         </div>
                     ))}
                 </div>
-                {/* FED Table remains full size */}
                 <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-2xl">
                     <div className="px-8 py-6 bg-gray-900 flex items-center justify-between">
                         <div className="flex items-center gap-3 text-white font-bold text-lg italic tracking-tight">
@@ -238,16 +254,19 @@ function App() {
 
         {activeSection === ExtendedSectionType.CALENDAR && <ReleaseCalendar lang={lang} />}
 
-        {/* Detail Overlay - Fix for PWA/Mobile Visibility */}
+        {/* Global Footer with Credit */}
+        <AppFooter />
+
+        {/* Detail Overlay - Fixed and Highly Visible for Mobile & PC */}
         {selectedChart && (
-            <div className="fixed bottom-[88px] left-4 right-4 md:bottom-8 md:right-8 md:left-auto md:w-[420px] bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-200 p-5 md:p-6 z-[60] animate-in slide-in-from-bottom-10">
+            <div className="fixed inset-x-0 bottom-[88px] md:bottom-8 md:right-8 md:left-auto md:w-[420px] mx-4 md:mx-0 bg-white rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-gray-200 p-5 md:p-6 z-[100] animate-in slide-in-from-bottom-10">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tight text-sm md:text-base">
                         <TrendingUp size={18} className="text-blue-500"/> {lang==='zh'?selectedChart.name:selectedChart.nameEn}
                     </h3>
                     <button 
-                      onClick={()=>setSelectedChart(null)} 
-                      className="p-2 hover:bg-gray-100 rounded-full transition-all text-gray-500 active:scale-90"
+                        onClick={()=>setSelectedChart(null)} 
+                        className="p-2 hover:bg-gray-100 rounded-full transition-all text-gray-500 active:scale-90"
                     >
                         <X size={20}/>
                     </button>
@@ -260,7 +279,7 @@ function App() {
                       color1="#2563EB" 
                     />
                 </div>
-                <div className="mt-4 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                     <p className="text-[10px] md:text-[11px] font-semibold text-blue-700 leading-relaxed">
                         {lang==='zh'?selectedChart.description:selectedChart.descriptionEn}
                     </p>
@@ -270,13 +289,13 @@ function App() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-around items-center px-4 py-3 z-40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 flex justify-around items-center px-4 py-3 z-50">
           {menuItems.map(item => (
               <button 
                 key={item.id} 
                 onClick={() => { setActiveSection(item.id); setSelectedChart(null); }} 
                 className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all ${
-                  activeSection === item.id ? 'text-blue-600 bg-blue-50 font-black' : 'text-gray-400 font-medium'
+                  activeSection === item.id ? 'text-blue-600 bg-blue-50 font-black shadow-inner' : 'text-gray-400 font-medium'
                 }`}
               >
                   <item.icon size={22} />
