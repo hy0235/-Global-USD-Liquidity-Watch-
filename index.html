@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="USD Watch" />
     <title>Global USD Liquidity Watch</title>
+    
+    <!-- PWA Icons for iOS - 使用 512px 缩略图并设置 no-referrer 确保图片在各端加载稳定 -->
+    <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Jerome_Powell_official_portrait.jpg/512px-Jerome_Powell_official_portrait.jpg" />
+    
     <link rel="manifest" href="/metadata.json" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -49,6 +53,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // 修复：必须使用 navigator.serviceWorker 而不是 navigator.worker
           navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
         });
       }

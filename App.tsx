@@ -12,7 +12,8 @@ import SectionAnalysis from './components/SectionAnalysis';
 import ReleaseCalendar from './components/ReleaseCalendar';
 import { generateDemoVideo } from './services/videoService';
 
-const POWELL_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Jerome_Powell_official_portrait.jpg/120px-Jerome_Powell_official_portrait.jpg";
+// 使用 512px 的缩略图，这通常在维基百科的缓存中最为稳定
+const POWELL_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Jerome_Powell_official_portrait.jpg/512px-Jerome_Powell_official_portrait.jpg";
 
 const TwitterBadge = ({ variant = 'default' }: { variant?: 'default' | 'premium' }) => (
     <a 
@@ -111,7 +112,12 @@ function App() {
         <div className="p-5">
             <div className="mb-8 flex items-center justify-between">
               <div className="font-bold text-lg flex items-center gap-2">
-                <img src={POWELL_AVATAR} className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-md" alt="Fed Chair" />
+                <img 
+                  src={POWELL_AVATAR} 
+                  referrerPolicy="no-referrer" 
+                  className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-md bg-gray-200" 
+                  alt="Fed Chair" 
+                />
                 <span className="tracking-tighter font-black">USD WATCH</span>
               </div>
             </div>
@@ -152,7 +158,12 @@ function App() {
       {/* Mobile Top Header */}
       <header className="md:hidden sticky top-0 bg-[#F7F7F5]/90 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between z-50">
           <div className="flex items-center gap-2">
-              <img src={POWELL_AVATAR} className="w-7 h-7 rounded-full object-cover border border-white shadow-sm" alt="Fed Chair" />
+              <img 
+                src={POWELL_AVATAR} 
+                referrerPolicy="no-referrer" 
+                className="w-7 h-7 rounded-full object-cover border border-white shadow-sm bg-gray-200" 
+                alt="Fed Chair" 
+              />
               <span className="text-[11px] font-black tracking-tight uppercase text-gray-900">USD Watch</span>
           </div>
           <div className="flex items-center gap-2">
