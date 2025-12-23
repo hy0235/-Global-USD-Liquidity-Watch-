@@ -12,6 +12,8 @@ import SectionAnalysis from './components/SectionAnalysis';
 import ReleaseCalendar from './components/ReleaseCalendar';
 import { generateDemoVideo } from './services/videoService';
 
+const POWELL_AVATAR = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Jerome_Powell_official_portrait.jpg/120px-Jerome_Powell_official_portrait.jpg";
+
 const TwitterBadge = ({ variant = 'default' }: { variant?: 'default' | 'premium' }) => (
     <a 
       href="https://x.com/shenhh88" 
@@ -104,13 +106,13 @@ function App() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F7F7F5]">
-      {/* PC Sidebar (Hidden on Mobile) */}
+      {/* PC Sidebar */}
       <aside className="hidden md:flex w-64 border-r border-[#E9E9E7] bg-[#F7F7F5] fixed h-full flex-col justify-between z-40">
         <div className="p-5">
             <div className="mb-8 flex items-center justify-between">
               <div className="font-bold text-lg flex items-center gap-2">
-                <div className="w-7 h-7 bg-black rounded-lg text-white flex items-center justify-center text-xs font-black italic shadow-lg">M</div>
-                <span className="tracking-tighter font-black">MACRO TERMINAL</span>
+                <img src={POWELL_AVATAR} className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-md" alt="Fed Chair" />
+                <span className="tracking-tighter font-black">USD WATCH</span>
               </div>
             </div>
             <nav className="space-y-1.5">
@@ -147,10 +149,10 @@ function App() {
         </div>
       </aside>
 
-      {/* Mobile Top Header - Highly Visible Author Branding */}
+      {/* Mobile Top Header */}
       <header className="md:hidden sticky top-0 bg-[#F7F7F5]/90 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between z-50">
           <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-black rounded text-white flex items-center justify-center text-[10px] font-black italic shadow-sm">M</div>
+              <img src={POWELL_AVATAR} className="w-7 h-7 rounded-full object-cover border border-white shadow-sm" alt="Fed Chair" />
               <span className="text-[11px] font-black tracking-tight uppercase text-gray-900">USD Watch</span>
           </div>
           <div className="flex items-center gap-2">
@@ -254,10 +256,9 @@ function App() {
 
         {activeSection === ExtendedSectionType.CALENDAR && <ReleaseCalendar lang={lang} />}
 
-        {/* Global Footer with Credit */}
         <AppFooter />
 
-        {/* Detail Overlay - Fixed and Highly Visible for Mobile & PC */}
+        {/* Detail Overlay */}
         {selectedChart && (
             <div className="fixed inset-x-0 bottom-[88px] md:bottom-8 md:right-8 md:left-auto md:w-[420px] mx-4 md:mx-0 bg-white rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-gray-200 p-5 md:p-6 z-[100] animate-in slide-in-from-bottom-10">
                 <div className="flex justify-between items-center mb-4">
