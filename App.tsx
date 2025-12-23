@@ -17,7 +17,7 @@ const TwitterBadge = () => (
       href="https://x.com/shenhh88" 
       target="_blank" 
       rel="noopener noreferrer" 
-      className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-full border border-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm bg-white"
+      className="flex items-center gap-2 px-3 py-1.5 text-[10px] md:text-xs font-semibold rounded-full border border-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm bg-white"
     >
         <Twitter size={14} fill="currentColor" />
         <span>By @shenhh88</span>
@@ -87,7 +87,7 @@ function App() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F7F7F5]">
-      {/* PC Sidebar */}
+      {/* PC Sidebar (Hidden on Mobile) */}
       <aside className="hidden md:flex w-64 border-r border-[#E9E9E7] bg-[#F7F7F5] fixed h-full flex-col justify-between z-40">
         <div className="p-5">
             <div className="mb-8 flex items-center justify-between">
@@ -130,8 +130,22 @@ function App() {
         </div>
       </aside>
 
+      {/* Mobile Top Header (Author & Title) */}
+      <header className="md:hidden sticky top-0 bg-[#F7F7F5]/80 backdrop-blur-lg border-b border-gray-200 px-4 py-3 flex items-center justify-between z-40">
+          <div className="font-bold text-sm flex items-center gap-2">
+              <div className="w-6 h-6 bg-black rounded text-white flex items-center justify-center text-[10px] font-black italic">M</div>
+              <span className="tracking-tighter font-black uppercase text-xs">USD WATCH</span>
+          </div>
+          <div className="flex items-center gap-2">
+              <TwitterBadge />
+              <button onClick={() => setLang(l => l==='zh'?'en':'zh')} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 border border-gray-200">
+                <Languages size={14}/>
+              </button>
+          </div>
+      </header>
+
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 p-4 md:p-8 pb-28 md:pb-8 max-w-7xl mx-auto w-full transition-all">
+      <main className="flex-1 md:ml-64 p-4 md:p-8 pb-32 md:pb-8 max-w-7xl mx-auto w-full transition-all">
         {activeSection === SectionType.DASHBOARD && (
             <div className="animate-in fade-in zoom-in-95 duration-300">
                 <SectionHeader title={t.headers.dashboard.title} icon={LayoutDashboard} description={t.headers.dashboard.desc} />
@@ -161,6 +175,7 @@ function App() {
                         </div>
                     ))}
                 </div>
+                {/* FED Table remains full size */}
                 <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-2xl">
                     <div className="px-8 py-6 bg-gray-900 flex items-center justify-between">
                         <div className="flex items-center gap-3 text-white font-bold text-lg italic tracking-tight">
@@ -181,13 +196,13 @@ function App() {
                             <tbody className="divide-y divide-gray-100 text-sm">
                                 {FED_EVENTS.map((event, idx) => (
                                     <tr key={idx} className="hover:bg-blue-50/20 transition-all group">
-                                        <td className="px-8 py-5 font-black text-gray-900">{event.date}</td>
+                                        <td className="px-8 py-5 font-black text-gray-900 whitespace-nowrap">{event.date}</td>
                                         <td className="px-8 py-5">
                                             <span className={`px-2 py-1 ${event.type === 'Meeting' ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'} text-[10px] rounded font-bold uppercase`}>
                                               {event.type}
                                             </span>
                                         </td>
-                                        <td className="px-8 py-5 font-medium text-gray-600">
+                                        <td className="px-8 py-5 font-medium text-gray-600 min-w-[200px]">
                                           {lang === 'zh' ? event.summary : event.summaryEn}
                                         </td>
                                         <td className="px-8 py-5 text-center">
@@ -223,21 +238,33 @@ function App() {
 
         {activeSection === ExtendedSectionType.CALENDAR && <ReleaseCalendar lang={lang} />}
 
-        {/* Detail Overlay - Fixed for Mobile & PC */}
+        {/* Detail Overlay - Fix for PWA/Mobile Visibility */}
         {selectedChart && (
-            <div className="fixed bottom-[88px] left-4 right-4 md:bottom-8 md:right-8 md:left-auto md:w-[400px] bg-white rounded-3xl shadow-2xl border border-gray-200 p-5 md:p-6 z-50 animate-in slide-in-from-bottom-8 md:slide-in-from-right-8">
+            <div className="fixed bottom-[88px] left-4 right-4 md:bottom-8 md:right-8 md:left-auto md:w-[420px] bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-gray-200 p-5 md:p-6 z-[60] animate-in slide-in-from-bottom-10">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="font-black text-gray-900 flex items-center gap-2 tracking-tight text-sm md:text-base">
                         <TrendingUp size={18} className="text-blue-500"/> {lang==='zh'?selectedChart.name:selectedChart.nameEn}
                     </h3>
-                    <button onClick={()=>setSelectedChart(null)} className="p-2 hover:bg-gray-100 rounded-xl transition-all text-gray-500"><X size={20}/></button>
+                    <button 
+                      onClick={()=>setSelectedChart(null)} 
+                      className="p-2 hover:bg-gray-100 rounded-full transition-all text-gray-500 active:scale-90"
+                    >
+                        <X size={20}/>
+                    </button>
                 </div>
                 <div className="bg-gray-50 rounded-2xl p-2 md:p-3 border border-gray-100">
-                    <ChartComponent data={selectedChart.history} dataKey1={selectedChart.code} height={window.innerWidth < 768 ? 160 : 220} color1="#2563EB" />
+                    <ChartComponent 
+                      data={selectedChart.history} 
+                      dataKey1={selectedChart.code} 
+                      height={window.innerWidth < 768 ? 160 : 220} 
+                      color1="#2563EB" 
+                    />
                 </div>
-                <p className="mt-3 p-3 bg-blue-50/50 rounded-2xl text-[10px] md:text-[11px] font-semibold text-blue-700 leading-relaxed border border-blue-100">
-                    {lang==='zh'?selectedChart.description:selectedChart.descriptionEn}
-                </p>
+                <div className="mt-4 p-3 bg-blue-50/50 rounded-2xl border border-blue-100">
+                    <p className="text-[10px] md:text-[11px] font-semibold text-blue-700 leading-relaxed">
+                        {lang==='zh'?selectedChart.description:selectedChart.descriptionEn}
+                    </p>
+                </div>
             </div>
         )}
       </main>
@@ -248,8 +275,8 @@ function App() {
               <button 
                 key={item.id} 
                 onClick={() => { setActiveSection(item.id); setSelectedChart(null); }} 
-                className={`flex flex-col items-center gap-1 p-2 rounded-2xl ${
-                  activeSection === item.id ? 'text-blue-600 bg-blue-50 font-black' : 'text-gray-400 font-bold'
+                className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all ${
+                  activeSection === item.id ? 'text-blue-600 bg-blue-50 font-black' : 'text-gray-400 font-medium'
                 }`}
               >
                   <item.icon size={22} />
