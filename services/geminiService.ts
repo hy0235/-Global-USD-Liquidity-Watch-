@@ -2,7 +2,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { Indicator, Language } from "../types";
 
-// 使用类型断言绕过环境变量检查
 const getApiKey = (): string => {
   try {
     return (process.env as any).API_KEY || "";
@@ -12,6 +11,35 @@ const getApiKey = (): string => {
 };
 
 const getAiClient = () => new GoogleGenAI({ apiKey: getApiKey() });
+
+// AI 实时抓取最新指标数据
+export const fetchLiveIndicatorValue = async (indicator: Indicator, lang: Language = 'zh'): Promise<{ value: string; summary: string }> => {
+  const ai = getAiClient();
+  const query = lang === 'zh'
+    ? `查询最新的金融市场数据：${indicator.nameEn} (${indicator.code}) 当前的最新数值、涨跌以及来源日期。请提供一个非常简洁的摘要。`
+    : `Find the latest financial market data for ${indicator.nameEn} (${indicator.code}). Current value, change, and source date. Provide a concise summary.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: query,
+      config: {
+        tools: [{ googleSearch: {} }],
+        systemInstruction: "You are a precise financial data terminal. Only provide the most recent and verified data points."
+      }
+    });
+
+    const text = response.text || "";
+    // 简单的解析逻辑，如果AI返回了明显的数值
+    const valueMatch = text.match(/(\d+\.?\d*)\s*[%|¥|$|bps|B|Tril]?/);
+    const value = valueMatch ? valueMatch[0] : (lang === 'zh' ? '见摘要' : 'See summary');
+
+    return { value, summary: text };
+  } catch (error) {
+    console.error("Live fetch error:", error);
+    return { value: 'N/A', summary: lang === 'zh' ? '搜索失败' : 'Search failed' };
+  }
+};
 
 export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndicators: Indicator[], lang: Language = 'zh'): Promise<string> => {
   const ai = getAiClient();
@@ -40,36 +68,21 @@ export const analyzeLiquidityImpact = async (usIndicators: Indicator[], jpyIndic
       contents: prompt,
       config: { systemInstruction }
     });
-    return response.text || (lang === 'zh' ? "AI 未能生成有效的分析结果。" : "AI failed to generate results.");
+    return response.text || "No response";
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return lang === 'zh' ? "分析服务暂时不可用。" : "Analysis service unavailable.";
+    return "Analysis service unavailable.";
   }
 };
 
 export const analyzeSectionLiquidity = async (sectionName: string, indicators: Indicator[], lang: Language = 'zh'): Promise<string> => {
   const ai = getAiClient();
-  const dataSummary = indicators.map(i => {
-      const name = lang === 'zh' ? i.name : i.nameEn;
-      return `${name} (${i.code}): ${i.currentValue}${i.unit} (Change: ${i.change}%)`
-  }).join('\n');
+  const dataSummary = indicators.map(i => `${lang === 'zh' ? i.name : i.nameEn}: ${i.currentValue}${i.unit}`).join('\n');
 
-  const prompt = lang === 'zh' ? `
-    对"${sectionName}"进行深度分析，特别是对 2025 年末到 2026 年初的政策传导。
-    数据:
+  const prompt = `
+    Analyze: ${sectionName}
+    Current Data:
     ${dataSummary}
-    请按以下格式输出：
-    ### 1. 推理逻辑
-    ### 2. 2025 现状判断
-    ### 3. 2026 政策锚点与风险
-  ` : `
-    Deep analysis for "${sectionName}" focusing on policy transmission from late 2025 to early 2026.
-    Data:
-    ${dataSummary}
-    Format:
-    ### 1. Reasoning Logic
-    ### 2. 2025 Status
-    ### 3. 2026 Policy Anchors & Risks
+    Focus on 2025-2026 cycle implications.
   `;
 
   try {
@@ -77,41 +90,32 @@ export const analyzeSectionLiquidity = async (sectionName: string, indicators: I
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        systemInstruction: lang === 'zh' ? "专业宏观交易员视角，关注未来两年周期" : "Professional macro trader perspective, focus on the next 2-year cycle"
+        systemInstruction: lang === 'zh' ? "专业宏观交易员视角" : "Macro trader perspective"
       }
     });
-    return response.text || (lang === 'zh' ? "生成失败。" : "Generation failed.");
+    return response.text || "";
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return lang === 'zh' ? "AI 分析服务暂时不可用。" : "AI analysis unavailable.";
+    return "";
   }
 };
 
 export const fetchIndicatorReleaseDates = async (lang: Language = 'zh'): Promise<{ text: string, sources: any[] }> => {
   const ai = getAiClient();
   const query = lang === 'zh' 
-    ? "搜索并列出 2025 年剩余月份和 2026 年初已知的美元宏观指标发布日程，特别是 FOMC 会议、PCE、非农以及 TGA 更新。请标注 2026 年的预估时间点。"
-    : "Search and list key USD macro indicator release dates for the rest of 2025 and early 2026, including FOMC Meetings, PCE, NFP, and TGA updates. Highlight estimated 2026 dates.";
+    ? "搜索 2025 年和 2026 年初最新的宏观指标发布时间表。包括 FOMC 会议、非农、PCE、CPI 以及 TGA 更新。"
+    : "Search for the latest 2025 and early 2026 macro indicator release schedules including FOMC, NFP, PCE, CPI, and TGA updates.";
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: query,
-      config: {
-        tools: [{ googleSearch: {} }]
-      }
+      config: { tools: [{ googleSearch: {} }] }
     });
-
     return { 
-      text: response.text || (lang === 'zh' ? "未发现相关日程。" : "No dates found."), 
+      text: response.text || "", 
       sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] 
     };
   } catch (error) {
-    console.error("Search Grounding Error:", error);
-    return { 
-      text: lang === 'zh' ? "无法获取日历数据，请稍后再试。" : "Unable to fetch calendar data.", 
-      sources: [] 
-    };
+    return { text: "Search error", sources: [] };
   }
 };
-

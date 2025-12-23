@@ -112,4 +112,3 @@ const ReleaseCalendar: React.FC<Props> = ({ lang }) => {
 };
 
 export default ReleaseCalendar;
-

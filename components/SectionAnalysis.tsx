@@ -101,4 +101,3 @@ const SectionAnalysis: React.FC<Props> = ({ title, indicators, colorTheme, lang 
 };
 
 export default SectionAnalysis;
-

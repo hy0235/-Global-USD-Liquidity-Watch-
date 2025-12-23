@@ -1,4 +1,3 @@
-
 export type Language = 'zh' | 'en';
 
 export enum SectionType {
@@ -9,17 +8,12 @@ export enum SectionType {
 }
 
 export enum SubCategory {
-  // Onshore
-  GENERAL_ONSHORE = 'GENERAL_ONSHORE',
-  REPO_MARKET = 'REPO_MARKET',
-  TREASURY_BASIS = 'TREASURY_BASIS',
-  XCCY_BASIS = 'XCCY_BASIS',
-  
-  // Offshore
-  JPY_MACRO = 'JPY_MACRO',
-  EURO_MARKET = 'EURO_MARKET',
-  
-  // Fed
+  GENERAL = 'GENERAL',              // 核心流动性 (General)
+  REPO_MARKET = 'REPO_MARKET',      // 回购市场 (Repo Market)
+  TREASURY_BASIS = 'TREASURY_BASIS', // 美债基差 (Treasury Basis)
+  XCCY_BASIS = 'XCCY_BASIS',       // 货币互换 (Cross-Currency Basis)
+  JPY_MARKET = 'JPY_MARKET',       // 日元市场 (JPY Market)
+  EURO_MARKET = 'EURO_MARKET',      // 欧元/离岸市场 (Euro Market)
   FED_RATES = 'FED_RATES',
   FED_DOTS = 'FED_DOTS'
 }
@@ -27,40 +21,34 @@ export enum SubCategory {
 export interface DataPoint {
   date: string;
   value: number;
-  value2?: number; // For comparison
+  value2?: number;
 }
 
 export interface Indicator {
   id: string;
   name: string;
-  nameEn: string; // English Name
-  code: string; // e.g., 'TGA', 'SOFR'
+  nameEn: string;
+  code: string;
   description: string;
-  descriptionEn: string; // English Description
+  descriptionEn: string;
   currentValue: number | string;
   unit: string;
-  change: number; // Percentage change
+  change: number;
   lastUpdated: string;
-  source: string; // Official data source authority
-  sourceUrl: string; // Direct link to official data
+  source: string;
+  sourceUrl: string;
   category: SectionType;
   subCategory: SubCategory;
-  weight: number; // 1-10, determines bubble size
+  weight: number;
   history: DataPoint[];
-  correlationNote?: string; // Relationship explanation
-  correlationNoteEn?: string; // English Relationship explanation
 }
 
 export interface FOMCEvent {
   date: string;
   type: 'Meeting' | 'Minutes' | 'Speech' | 'Data Release';
   summary: string;
-  summaryEn: string; // English Summary
+  summaryEn: string;
   impactLevel: 'High' | 'Medium' | 'Low';
-  speaker?: string; // For speeches
-}
-
-export interface AdminConfig {
-  isAdminMode: boolean;
-  customModules: Array<{ id: string; name: string }>;
+  speaker?: string;
+  sourceUrl?: string;
 }

@@ -1,11 +1,10 @@
-
-import { SectionType, SubCategory, Language } from './types';
+import { SubCategory } from './types';
 
 export const UI_TEXT = {
   zh: {
     appTitle: '美元流动性观察',
     nav: {
-      dashboard: '概览 (Bubble Map)',
+      dashboard: '全景概览 (Graph)',
       coreSections: '核心板块',
       onshore: '在岸美元流动性',
       offshore: '离岸美元流动性',
@@ -14,62 +13,57 @@ export const UI_TEXT = {
     },
     headers: {
       dashboard: {
-        title: '全景概览',
-        desc: '拖拽气泡以探索指标关联。气泡大小代表指标权重。'
+        title: '宏观全景概览',
+        desc: '拖拽气泡探索指标关联。蓝色=在岸，紫色=离岸，红色=美联储。'
       },
       onshore: {
         title: '在岸美元流动性',
-        desc: '包含回购市场、美债基差 (Basis Trade) 及货币互换 (X-Ccy)。'
+        desc: '核心监测：核心流动性 (General) / 回购市场 (Repo Market) / 美债基差 (Treasury Basis)。'
       },
       offshore: {
         title: '离岸美元流动性',
-        desc: '覆盖日元宏观套息交易及欧洲美元市场。'
+        desc: '核心监测：货币互换 (Cross-Currency Basis) / 日元市场 / 欧元市场。'
       },
       fed: {
         title: '美联储政策',
-        desc: 'FOMC 日程、官员讲话及通胀/利率预测。'
+        desc: '官方 2025-2026 FOMC 会议日程、中性利率预测及政策路径。'
       },
       calendar: {
-        title: '宏观日历 (实时搜索)',
-        desc: '利用 Google Search 实时获取最新的指标发布日程。'
+        title: '宏观发布日历',
+        desc: '实时抓取 2025-2026 关键数据发布时间节点。'
       }
     },
     actions: {
       generateVideo: '生成演示视频',
       generating: '生成中 (需1-2分钟)...',
-      systemRunning: '系统运行中',
-      downloadVideo: '下载视频',
       close: '关闭',
       viewSource: '查看源数据',
-      updateAnalysis: '更新分析',
-      thinking: '思考中...',
-      aiAnalysisTitle: 'AI 宏观综合分析',
-      aiAnalysisPlaceholder: '点击更新以生成基于 TGA、RRP、基差及日元动态的综合流动性分析。',
+      thinking: '分析中...',
       aiSectionTitle: 'AI 智能流动性推演',
-      aiSectionSubtitle: '基于核心指标的实时逻辑分析',
-      aiSectionBtn: '生成结论',
-      aiSectionPlaceholder: '点击上方按钮，AI 将根据当前的指标组合进行因果链推导。',
-      fetchCalendar: '查询最新发布日期',
+      aiSectionSubtitle: '基于核心指标的逻辑推导',
+      aiSectionBtn: '生成推论',
+      aiSectionPlaceholder: '点击生成推论，AI 将深度挖掘本板块指标的内在联系。',
+      fetchCalendar: '搜索最新发布日期',
       sources: '参考来源'
     },
     subCategories: {
-      [SubCategory.GENERAL_ONSHORE]: '核心流动性 (General)',
+      [SubCategory.GENERAL]: '核心流动性 (General)',
       [SubCategory.REPO_MARKET]: '回购市场 (Repo Market)',
-      [SubCategory.TREASURY_BASIS]: '美债基差 (Treasury Basis Trade)',
+      [SubCategory.TREASURY_BASIS]: '美债基差 (Treasury Basis)',
       [SubCategory.XCCY_BASIS]: '货币互换 (Cross-Currency Basis)',
-      [SubCategory.JPY_MACRO]: '日元宏观 (JPY Macro)',
-      [SubCategory.EURO_MARKET]: '欧元市场 (Euro Market)',
-      [SubCategory.FED_RATES]: '利率与通胀',
-      [SubCategory.FED_DOTS]: '点阵图预测'
+      [SubCategory.JPY_MARKET]: '日元市场 (JPY Market)',
+      [SubCategory.EURO_MARKET]: '欧元/离岸市场 (Euro Market)',
+      [SubCategory.FED_RATES]: '基准利率 (EFFR)',
+      [SubCategory.FED_DOTS]: '点阵图/中性利率'
     },
     fedTable: {
-      title: '日程表 & 讲话'
+      title: '2025-2026 FOMC 官方日程表'
     }
   },
   en: {
     appTitle: 'USD Liquidity Watch',
     nav: {
-      dashboard: 'Overview (Bubble Map)',
+      dashboard: 'Overview (Graph)',
       coreSections: 'CORE SECTIONS',
       onshore: 'Onshore Liquidity',
       offshore: 'Offshore Liquidity',
@@ -78,56 +72,51 @@ export const UI_TEXT = {
     },
     headers: {
       dashboard: {
-        title: 'Dashboard Overview',
-        desc: 'Drag bubbles to explore correlations. Bubble size represents indicator weight.'
+        title: 'Macro Overview',
+        desc: 'Explore correlations via bubbles. Blue = Onshore, Purple = Offshore.'
       },
       onshore: {
         title: 'Onshore USD Liquidity',
-        desc: 'Repo Market, Treasury Basis Trade, and Cross-Currency Swaps.'
+        desc: 'Focus: General, Repo, and Treasury Basis.'
       },
       offshore: {
         title: 'Offshore USD Liquidity',
-        desc: 'JPY Macro Carry Trade and Eurodollar Markets.'
+        desc: 'Focus: Cross-Currency Basis, JPY Market, Euro Market.'
       },
       fed: {
         title: 'Federal Reserve Policy',
-        desc: 'FOMC Schedule, Speeches, and Inflation/Rate Projections.'
+        desc: 'Official 2025-2026 FOMC schedule and outlook.'
       },
       calendar: {
-        title: 'Macro Calendar (Live Search)',
-        desc: 'Real-time schedule of macro indicators powered by Google Search.'
+        title: 'Macro Calendar',
+        desc: 'Live schedule powered by Google Search.'
       }
     },
     actions: {
-      generateVideo: 'Generate Demo Video',
-      generating: 'Generating (1-2 min)...',
-      systemRunning: 'System Operational',
-      downloadVideo: 'Download Video',
+      generateVideo: 'Generate Video',
+      generating: 'Generating...',
       close: 'Close',
       viewSource: 'Source',
-      updateAnalysis: 'Update Analysis',
       thinking: 'Thinking...',
-      aiAnalysisTitle: 'AI Macro Synthesis',
-      aiAnalysisPlaceholder: 'Click update to generate comprehensive analysis based on TGA, RRP, Basis, and JPY dynamics.',
-      aiSectionTitle: 'AI Liquidity Deduction',
-      aiSectionSubtitle: 'Real-time logic analysis based on core indicators',
-      aiSectionBtn: 'Generate Insights',
-      aiSectionPlaceholder: 'Click the button above to let AI deduce causal chains based on current metrics.',
+      aiSectionTitle: 'AI Insights',
+      aiSectionSubtitle: 'Logic chain analysis',
+      aiSectionBtn: 'Deduce',
+      aiSectionPlaceholder: 'Generate causal chain analysis.',
       fetchCalendar: 'Fetch Latest Dates',
       sources: 'Sources'
     },
     subCategories: {
-      [SubCategory.GENERAL_ONSHORE]: 'General Liquidity',
+      [SubCategory.GENERAL]: 'Core Liquidity (General)',
       [SubCategory.REPO_MARKET]: 'Repo Market',
-      [SubCategory.TREASURY_BASIS]: 'Treasury Basis Trade',
+      [SubCategory.TREASURY_BASIS]: 'Treasury Basis',
       [SubCategory.XCCY_BASIS]: 'Cross-Currency Basis',
-      [SubCategory.JPY_MACRO]: 'JPY Macro',
-      [SubCategory.EURO_MARKET]: 'Euro Market',
-      [SubCategory.FED_RATES]: 'Rates & Inflation',
-      [SubCategory.FED_DOTS]: 'Dot Plot Projections'
+      [SubCategory.JPY_MARKET]: 'JPY Market',
+      [SubCategory.EURO_MARKET]: 'Euro/Offshore Market',
+      [SubCategory.FED_RATES]: 'EFFR Target',
+      [SubCategory.FED_DOTS]: 'SEP Projections'
     },
     fedTable: {
-      title: 'Schedule & Speeches'
+      title: '2025-2026 FOMC Calendar'
     }
   }
 };

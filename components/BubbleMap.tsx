@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { Indicator, Language } from '../types';
@@ -21,28 +20,25 @@ const getLinks = (nodes: any[]) => {
     }
   };
 
-  // --- Onshore Connections ---
+  // --- 在岸逻辑 ---
   addLink('TGA', 'ON RRP', 0.8);
-  addLink('TGA', 'WALCL', 0.5);
-  addLink('ON RRP', 'WALCL', 0.5);
-  addLink('ON RRP', 'SOFR', 0.7);
-  addLink('SOFR', 'Repo-IORB', 0.9);
-  addLink('SOFR', 'EFFR', 0.6);
-  addLink('UST Basis', 'Lev Shorts', 0.9);
-  addLink('UST Basis', 'Imp Repo', 0.8);
-  addLink('Imp Repo', 'SOFR', 0.5);
-
-  // --- Offshore Connections ---
-  addLink('USDJPY', 'JP10Y', 0.9);
-  addLink('USDJPY', 'BOJ Rate', 0.7);
-  addLink('JP10Y', 'BOJ Rate', 0.8);
-  addLink('Eurodollars', 'Offshore Credit', 0.6);
+  addLink('TGA', 'Reserves', 0.9);
+  addLink('WALCL', 'Reserves', 0.95);
+  addLink('ON RRP', 'SOFR', 0.8);
+  addLink('Basis', 'LevShorts', 0.95);
+  addLink('SOFR', 'Basis', 0.6);
   
-  // --- Cross-Border Connections ---
-  addLink('EURCBS 3M', 'Eurodollars', 0.7);
-  addLink('JPYCBS 3M', 'USDJPY', 0.6);
-  addLink('JPYCBS 3M', 'JP10Y', 0.4);
-  addLink('Swap Lines', 'EURCBS 3M', 0.5);
+  // --- 离岸逻辑 ---
+  addLink('USDJPY', 'JP10Y', 0.9);
+  addLink('BoJRate', 'USDJPY', 0.8);
+  addLink('JPYCBS', 'USDJPY', 0.9);
+  addLink('EURCBS', 'TED', 0.7);
+  addLink('BISCredit', 'EURCBS', 0.6);
+  
+  // --- 跨市场逻辑 ---
+  addLink('FFR', 'Reserves', 0.7);
+  addLink('FFR', 'USDJPY', 0.6);
+  addLink('SOFR', 'JPYCBS', 0.5);
 
   return links;
 };
@@ -56,9 +52,14 @@ const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, sele
       ...onshore.map(i => ({ ...i, group: 'onshore' })), 
       ...offshore.map(i => ({ ...i, group: 'offshore' }))
     ];
+    const fedNodes = [
+        { id: 'fed-1', code: 'FFR', weight: 10, group: 'fed', currentValue: 4.50, unit: '%' },
+        { id: 'fed-2', code: 'SEP2026', weight: 8, group: 'fed', currentValue: 3.4, unit: '%' }
+    ];
+    const allNodes = [...combinedNodes, ...fedNodes];
     return {
-      nodes: combinedNodes,
-      links: getLinks(combinedNodes)
+      nodes: allNodes,
+      links: getLinks(allNodes)
     };
   });
 
@@ -66,46 +67,38 @@ const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, sele
     if (!svgRef.current || !wrapperRef.current) return;
 
     const width = wrapperRef.current.clientWidth;
-    const height = 600;
+    const height = window.innerWidth < 768 ? 450 : 600;
     
     d3.select(svgRef.current).selectAll("*").remove();
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [0, 0, width, height])
-      .attr("style", "max-width: 100%; height: auto; background-color: #0F1115;"); // Dark background like bubblemaps.io
+      .attr("style", `max-width: 100%; height: auto; background-color: #0F1115;`);
 
-    // --- Simulation ---
     const simulation = d3.forceSimulation(data.nodes as any)
-      .force("link", d3.forceLink(data.links).id((d: any) => d.id).distance(120)) // Longer links for cleaner look
-      .force("charge", d3.forceManyBody().strength(-600)) // Stronger repulsion to prevent overlap
-      .force("collide", d3.forceCollide().radius((d: any) => getSize(d.weight) + 15).iterations(2))
-      .force("x", d3.forceX((d: any) => d.group === 'onshore' ? width * 0.35 : width * 0.65).strength(0.1))
-      .force("y", d3.forceY(height / 2).strength(0.08));
+      .force("link", d3.forceLink(data.links).id((d: any) => d.id).distance(width < 768 ? 90 : 130))
+      .force("charge", d3.forceManyBody().strength(width < 768 ? -400 : -800))
+      .force("collide", d3.forceCollide().radius((d: any) => getSize(d.weight) + (width < 768 ? 10 : 25)))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("x", d3.forceX((d: any) => {
+        if (d.group === 'onshore') return width * 0.3;
+        if (d.group === 'offshore') return width * 0.7;
+        return width * 0.5;
+      }).strength(0.1));
 
-    // --- Aesthetics (Solid Colors & Strokes) ---
-    // Onshore: Cyan/Blue
-    const colorOnshoreFill = "#1e3a8a"; // Dark Blue
-    const colorOnshoreStroke = "#60A5FA"; // Bright Blue
+    const colorOnshore = "#3B82F6"; 
+    const colorOffshore = "#8B5CF6"; 
+    const colorFed = "#EF4444";
+    const colorSelected = "#F59E0B"; 
 
-    // Offshore: Purple/Pink
-    const colorOffshoreFill = "#4c1d95"; // Dark Purple
-    const colorOffshoreStroke = "#C084FC"; // Bright Purple
-
-    const colorSelectedFill = "#b45309"; // Dark Amber
-    const colorSelectedStroke = "#FBBF24"; // Bright Amber
-
-    // --- Drawing ---
-
-    // 1. Links
     const link = svg.append("g")
-      .attr("stroke", "#374151") // Dark grey lines
-      .attr("stroke-opacity", 0.6)
+      .attr("stroke", "#334155")
+      .attr("stroke-opacity", 0.4)
       .selectAll("line")
       .data(data.links)
       .join("line")
-      .attr("stroke-width", 1);
+      .attr("stroke-width", 1.5);
 
-    // 2. Nodes
     const node = svg.append("g")
       .selectAll("g")
       .data(data.nodes)
@@ -113,46 +106,43 @@ const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, sele
       .attr("cursor", "pointer")
       .call(drag(simulation) as any)
       .on("click", (event, d) => {
-          onSelect(d as unknown as Indicator);
+          if (d.group !== 'fed') {
+            onSelect(d as unknown as Indicator);
+          }
           event.stopPropagation();
       });
 
-    // Bubble Circle (Main)
     node.append("circle")
       .attr("r", (d: any) => getSize(d.weight))
       .attr("fill", (d: any) => {
-          if (d.id === selectedId) return colorSelectedFill;
-          return d.group === 'onshore' ? colorOnshoreFill : colorOffshoreFill;
+          if (d.id === selectedId) return colorSelected;
+          if (d.group === 'onshore') return colorOnshore;
+          if (d.group === 'offshore') return colorOffshore;
+          return colorFed;
       })
-      .attr("stroke", (d: any) => {
-          if (d.id === selectedId) return colorSelectedStroke;
-          return d.group === 'onshore' ? colorOnshoreStroke : colorOffshoreStroke;
-      })
-      .attr("stroke-width", 3) // Thicker stroke for that 'token' look
-      .attr("stroke-opacity", 0.9)
-      .transition().duration(300);
+      .attr("stroke", "#FFFFFF")
+      .attr("stroke-width", 2)
+      .attr("stroke-opacity", 0.2)
+      .style("filter", "drop-shadow(0px 4px 8px rgba(0,0,0,0.3))");
 
-    // Code Label
     node.append("text")
       .text((d: any) => d.code)
       .attr("text-anchor", "middle")
       .attr("dy", "-0.2em")
       .attr("fill", "#ffffff")
-      .attr("font-weight", "600")
-      .attr("font-family", "Inter, sans-serif")
-      .attr("font-size", (d: any) => Math.min(getSize(d.weight) / 2, 14))
+      .attr("font-weight", "900")
+      .attr("font-size", (d: any) => Math.min(getSize(d.weight) / 2.2, width < 768 ? 9 : 12))
       .style("pointer-events", "none");
 
-    // Value Label
     node.append("text")
-      .text((d: any) => d.currentValue)
+      .text((d: any) => `${d.currentValue}${d.unit}`)
       .attr("text-anchor", "middle")
-      .attr("dy", "1.2em")
-      .attr("fill", "#cbd5e1") // Slate-300
-      .attr("font-size", (d: any) => Math.min(getSize(d.weight) / 2.5, 11))
+      .attr("dy", "1.3em")
+      .attr("fill", "rgba(255,255,255,0.7)")
+      .attr("font-weight", "700")
+      .attr("font-size", (d: any) => Math.min(getSize(d.weight) / 3, width < 768 ? 7 : 10))
       .style("pointer-events", "none");
 
-    // --- Update positions ---
     simulation.on("tick", () => {
       link
         .attr("x1", (d: any) => d.source.x)
@@ -185,36 +175,31 @@ const BubbleMap: React.FC<BubbleMapProps> = ({ onshore, offshore, onSelect, sele
         .on("end", dragended);
     }
 
-    return () => {
-      simulation.stop();
-    };
+    return () => simulation.stop();
   }, [data, selectedId]);
 
   const getSize = (weight: number) => {
-    return 35 + (weight * 4.5); 
+      const base = window.innerWidth < 768 ? 24 : 35;
+      return base + (weight * 3.5);
   };
 
-  const labelOnshore = lang === 'zh' ? "在岸 (Onshore)" : "Onshore";
-  const labelOffshore = lang === 'zh' ? "离岸 (Offshore)" : "Offshore";
-
   return (
-    <div ref={wrapperRef} className="w-full bg-[#0F1115] rounded-xl overflow-hidden shadow-2xl border border-gray-800 relative">
-        <div className="absolute top-4 left-4 z-10 flex gap-4 pointer-events-none">
-            <div className="flex items-center gap-2 px-2 py-1 bg-black/40 rounded-full border border-gray-700 backdrop-blur-sm">
-                <div className="w-3 h-3 rounded-full bg-[#60A5FA]"></div>
-                <span className="text-xs text-gray-200 font-medium">{labelOnshore}</span>
+    <div ref={wrapperRef} className="w-full bg-[#0F1115] rounded-[2rem] overflow-hidden shadow-2xl border border-gray-800 relative group">
+        <div className="absolute top-6 left-6 z-10 flex flex-wrap gap-3 pointer-events-none">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-full border border-blue-500/30 backdrop-blur-md">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span className="text-[10px] text-blue-200 font-black uppercase tracking-tighter">Onshore</span>
             </div>
-            <div className="flex items-center gap-2 px-2 py-1 bg-black/40 rounded-full border border-gray-700 backdrop-blur-sm">
-                <div className="w-3 h-3 rounded-full bg-[#C084FC]"></div>
-                <span className="text-xs text-gray-200 font-medium">{labelOffshore}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-full border border-purple-500/30 backdrop-blur-md">
+                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                <span className="text-[10px] text-purple-200 font-black uppercase tracking-tighter">Offshore</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 rounded-full border border-red-500/30 backdrop-blur-md">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="text-[10px] text-red-200 font-black uppercase tracking-tighter">Fed</span>
             </div>
         </div>
-        
-        <div className="absolute bottom-4 right-4 z-10 text-[10px] text-gray-500 pointer-events-none">
-            Interactive Force Graph • Powered by D3
-        </div>
-
-        <svg ref={svgRef} className="w-full h-[600px] block"></svg>
+        <svg ref={svgRef} className="w-full h-[450px] md:h-[600px] block"></svg>
     </div>
   );
 };

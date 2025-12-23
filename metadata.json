@@ -1,5 +1,19 @@
 {
-  "name": "全球宏观流动性监测 (2025-2026版)",
-  "description": "专业级美元流动性、日元宏观及美联储政策监测看板。深度覆盖2025年降息周期及2026年中性利率展望。",
-  "requestFramePermissions": []
+  "name": "Global USD Liquidity Watch",
+  "short_name": "USD Watch",
+  "description": "Professional Macro & USD Liquidity Terminal for 2025-2026.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F7F5",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2621/2621814.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }
